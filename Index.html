@@ -1,0 +1,601 @@
+<!-- Biblioteca Escolar - versão atualizada (final) -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sistema Biblioteca Escolar</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 0; color: #222; }
+    header { background: #1f4e79; color: #fff; padding: 18px 20px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+    header h1 { margin: 0; font-size: 28px; }
+    header div { margin-top: 6px; font-size: 14px; opacity: .95; }
+    header { position: relative; }
+    .autor-site { position: absolute; top: 8px; right: 12px; font-size: 11px; opacity: .7; font-style: italic; }
+    .container { max-width: 1280px; margin: 20px auto; padding: 15px; }
+    .card { background: #fff; border-radius: 10px; padding: 18px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    h2, h3 { margin-top: 0; color: #1f4e79; }
+    label { font-weight: bold; display: block; margin-bottom: 4px; }
+    input, select, textarea, button { width: 100%; padding: 10px; margin-top: 4px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+    textarea { min-height: 90px; resize: vertical; }
+    button { background: #1f4e79; color: white; border: none; cursor: pointer; font-weight: bold; transition: .2s; }
+    button:hover { background: #163a59; }
+    .menu { display: flex; gap: 10px; flex-wrap: wrap; }
+    .menu button, .linha-botoes button, .acoes button { width: auto; }
+    .menu button { padding: 10px 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+    .metric { background: #eef4fa; border-left: 5px solid #1f4e79; padding: 12px; border-radius: 8px; min-height: 90px; }
+    .metric strong { display: block; margin-bottom: 8px; color: #1f4e79; }
+    .metric span { font-size: 28px; font-weight: bold; display: block; margin-top: 6px; }
+    .hidden { display: none; }
+    .sucesso, .erro { padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 14px; }
+    .sucesso { background: #dff0d8; color: #2e6b2e; border: 1px solid #b8d8b1; }
+    .erro { background: #f8d7da; color: #842029; border: 1px solid #f0b9c0; }
+    .linha-botoes { display: flex; gap: 10px; flex-wrap: wrap; }
+    .linha-botoes button { min-width: 150px; }
+    .tabela-wrapper { overflow-x: auto; margin-top: 12px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; min-width: 700px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 14px; vertical-align: top; }
+    th { background: #1f4e79; color: white; position: sticky; top: 0; }
+    .acoes { display: flex; gap: 6px; flex-wrap: wrap; }
+    .acoes button { padding: 6px 10px; margin: 0; font-size: 12px; }
+    .status-atrasado { color: #b00020; font-weight: bold; }
+    .status-emprestado { color: #d17b00; font-weight: bold; }
+    .status-devolvido { color: #0b7a0b; font-weight: bold; }
+    .duas-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    @media (max-width: 900px) { .duas-colunas { grid-template-columns: 1fr; } }
+    #consultas table { min-width: 100%; table-layout: fixed; }
+    #consultas td, #consultas th { word-break: break-word; }
+    @media (max-width: 768px) {
+      .container { padding: 8px; margin: 8px auto; }
+      .card { padding: 12px; }
+      .menu button { width: 100%; }
+      table { min-width: 560px; }
+      header h1 { font-size: 20px; }
+    }
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .container { max-width: 95%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GET RIVADAVIA CORRÊA</h1>
+    <h1>Sala de Leitura Lélia Gonzalez</h1>
+    <div>Nesta sala, a leitura não é só hábito: é caminho de transformação</div>
+    <div class="autor-site">AHE</div>
+  </header>
+
+  <div class="container">
+    <div id="loginArea" class="card">
+      <h2>Login</h2>
+      <div id="loginMsg"></div>
+      <label>Usuário</label><input type="text" id="usuario">
+      <label>Senha</label><input type="password" id="senha">
+      <button onclick="fazerLogin()">Entrar</button>
+      <button type="button" onclick="toggleRecuperacaoSenha()">Esqueci minha senha</button>
+
+      <div id="recuperacaoArea" class="hidden">
+        <h3>Recuperação de Senha</h3>
+        <label>Usuário</label><input type="text" id="rec_usuario">
+        <label>Nome completo</label><input type="text" id="rec_nome">
+        <label>Nova senha</label><input type="password" id="rec_nova_senha">
+        <button type="button" onclick="recuperarSenhaFront()">Atualizar Senha</button>
+      </div>
+    </div>
+
+    <div id="appArea" class="hidden">
+      <div class="card">
+        <h3 id="saudacaoUsuario">Olá!</h3>
+      </div>
+      <div class="card">
+        <div class="menu">
+          <button onclick="mostrarSecao('dashboard')">Dashboard</button>
+          <button onclick="mostrarSecao('alunos')">Alunos</button>
+          <button onclick="mostrarSecao('livros')">Livros</button>
+          <button onclick="mostrarSecao('emprestimos')">Empréstimos</button>
+          <button onclick="mostrarSecao('consultas')">Consultas</button>
+          <button onclick="mostrarSecao('rankings')">Rankings</button>
+          <button onclick="mostrarSecao('relatorios')">Relatórios</button>
+          <button id="menuLogs" class="hidden" onclick="mostrarSecao('logs')">Logs</button>
+          <button onclick="logout()">Sair</button>
+        </div>
+      </div>
+
+      <div id="dashboard" class="secao card"><h2>Dashboard</h2><div class="grid">
+        <div class="metric"><strong>Total de livros</strong><span id="mTotalLivros">0</span></div>
+        <div class="metric"><strong>Disponíveis</strong><span id="mDisponiveis">0</span></div>
+        <div class="metric"><strong>Emprestados</strong><span id="mEmprestados">0</span></div>
+        <div class="metric"><strong>Atrasados</strong><span id="mAtrasados">0</span></div>
+        <div class="metric"><strong>Vencem hoje</strong><span id="mHoje">0</span></div>
+      </div></div>
+
+      <div id="alunos" class="secao card hidden"><h2>Alunos</h2><div id="alunoMsg"></div>
+        <input type="hidden" id="aluno_matricula_original">
+        <div class="duas-colunas"><div><label>Matrícula</label><input type="text" id="aluno_matricula"></div><div><label>Nome</label><input type="text" id="aluno_nome"></div></div>
+        <div class="linha-botoes"><button onclick="salvarAluno()">Salvar Aluno</button></div>
+        <h3>Lista de Alunos</h3><div class="tabela-wrapper" id="tabelaAlunos"></div>
+      </div>
+
+      <div id="livros" class="secao card hidden"><h2>Livros</h2><div id="livroMsg"></div>
+        <input type="hidden" id="id_livro_edicao">
+        <div class="duas-colunas"><div><label>Título</label><input type="text" id="titulo"></div><div><label>Autor</label><input type="text" id="autor"></div></div>
+        <div class="duas-colunas"><div><label>Editora</label><input type="text" id="editora"></div><div><label>ISBN</label><input type="text" id="isbn"></div></div>
+        <div class="duas-colunas"><div><label>Categoria</label><input type="text" id="categoria"></div><div><label>Ano</label><input type="text" id="ano"></div></div>
+        <div class="duas-colunas"><div><label>Quantidade total</label><input type="number" id="quantidade_total"></div><div><label>Localização</label><input type="text" id="localizacao"></div></div>
+        <div class="duas-colunas"><div><label>Status</label><select id="status_livro"><option value="Ativo">Ativo</option><option value="Inativo">Inativo</option></select></div><div></div></div>
+        <label>Observações</label><textarea id="observacoes"></textarea>
+        <div class="linha-botoes"><button onclick="salvarLivro()">Salvar Livro</button></div>
+
+        <h3>Consulta de Livros</h3>
+        <label>Escolha o tipo de busca</label>
+        <select id="tipoBuscaLivroConsulta">
+          <option value="id_titulo_isbn">Título, ID ou ISBN</option>
+          <option value="categoria">Categoria</option>
+          <option value="localizacao">Localização</option>
+        </select>
+        <input type="text" id="buscaLivroConsulta">
+        <button type="button" onclick="consultarLivrosFront()">Consultar Livro</button>
+        <div class="tabela-wrapper" id="resultadoConsultaLivros"></div>
+
+        <h3>Lista de Livros</h3><div class="tabela-wrapper" id="tabelaLivros"></div>
+      </div>
+
+      <div id="emprestimos" class="secao card hidden"><h2>Empréstimos</h2><div id="empMsg"></div>
+        <input type="hidden" id="id_emprestimo_edicao">
+        <div class="duas-colunas"><div><label>Matrícula do aluno</label><input type="text" id="matricula" onblur="buscarAluno()"></div><div><label>Nome do aluno</label><input type="text" id="nome_aluno" readonly></div></div>
+        <div class="duas-colunas"><div><label>Livro</label><select id="id_livro"></select></div><div><label>Prazo em dias</label><input type="number" id="prazo_dias" value="7"></div></div>
+        <label>Observações</label><textarea id="obs_emprestimo"></textarea>
+        <div class="linha-botoes"><button onclick="salvarEmprestimo()">Salvar Empréstimo</button></div>
+        <h3>Lista de Empréstimos</h3><div class="tabela-wrapper" id="tabelaEmprestimos"></div>
+      </div>
+
+      <div id="consultas" class="secao card hidden"><h2>Consultas de Histórico</h2>
+        <div class="duas-colunas">
+          <div><h3>Histórico por Aluno</h3><label>Digite matrícula ou nome do aluno</label><input type="text" id="buscaAlunoHistorico"><button onclick="consultarHistoricoAlunoFront()">Consultar Aluno</button><div class="tabela-wrapper" id="resultadoHistoricoAluno"></div></div>
+          <div><h3>Histórico por Livro</h3><label>Digite ID ou título do livro</label><input type="text" id="buscaLivroHistorico"><button onclick="consultarHistoricoLivroFront()">Consultar Livro</button><div class="tabela-wrapper" id="resultadoHistoricoLivro"></div></div>
+        </div>
+        <h3>Empréstimos pendentes (não devolvidos)</h3>
+        <button type="button" onclick="consultarPendentesFront()">Consultar Pendentes</button>
+        <div class="tabela-wrapper" id="resultadoPendentes"></div>
+      </div>
+
+
+      <div id="logs" class="secao card hidden"><h2>Logs do Sistema</h2>
+        <div class="linha-botoes"><button onclick="carregarLogs()">Atualizar Logs</button></div>
+        <div class="tabela-wrapper" id="tabelaLogs"></div>
+      </div>
+
+      
+      <div id="relatorios" class="secao card hidden"><h2>Relatórios</h2>
+        <h3>Livros cadastrados por categoria</h3>
+        <label>Categoria</label>
+        <select id="rel_categoria"></select>
+        <div class="linha-botoes">
+          <button type="button" onclick="gerarRelatorioLivros()">Gerar Relatório de Livros</button>
+          <button type="button" onclick="imprimirArea('resultadoRelLivros')">Imprimir Relatório de Livros</button>
+        </div>
+        <div class="tabela-wrapper" id="resultadoRelLivros"></div>
+
+        <h3>Empréstimos por período</h3>
+        <div class="duas-colunas">
+          <div><label>Data inicial</label><input type="date" id="rel_emp_inicio"></div>
+          <div><label>Data final</label><input type="date" id="rel_emp_fim"></div>
+        </div>
+        <label>Status</label>
+        <select id="rel_emp_status">
+          <option value="Todos">Todos</option>
+          <option value="Emprestado">Emprestado</option>
+          <option value="Atrasado">Atrasado</option>
+          <option value="Devolvido">Devolvido</option>
+        </select>
+        <div class="linha-botoes">
+          <button type="button" onclick="gerarRelatorioEmprestimos()">Gerar Relatório de Empréstimos</button>
+          <button type="button" onclick="imprimirArea('resultadoRelEmprestimos')">Imprimir Relatório de Empréstimos</button>
+        </div>
+        <div class="tabela-wrapper" id="resultadoRelEmprestimos"></div>
+      </div>
+
+      <div id="rankings" class="secao card hidden"><h2>Rankings por Período</h2>
+        <div class="duas-colunas"><div><label>Data inicial</label><input type="date" id="ranking_data_inicio"></div><div><label>Data final</label><input type="date" id="ranking_data_fim"></div></div>
+        <div class="linha-botoes"><button onclick="carregarRankingAlunos()">Top 10 Alunos</button><button onclick="carregarRankingLivros()">Top 10 Livros</button></div>
+        <div class="duas-colunas">
+          <div><h3>Top 10 Alunos com mais empréstimos</h3><div id="rankingAlunosMsg"></div><div class="tabela-wrapper" id="resultadoRankingAlunos"></div></div>
+          <div><h3>Top 10 Livros com mais empréstimos</h3><div id="rankingLivrosMsg"></div><div class="tabela-wrapper" id="resultadoRankingLivros"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function escaparParaJS(texto) {
+      return String(texto || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, ' ').replace(/\r/g, ' ');
+    }
+    function escaparHTML(texto) {
+      return String(texto || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+    function mostrarMensagem(id, tipo, texto) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const box = document.createElement("div");
+      box.className = tipo;
+      box.textContent = String(texto || "");
+      el.innerHTML = "";
+      el.appendChild(box);
+    }
+    function limparMensagem(id) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = "";
+    }
+    function toggleRecuperacaoSenha() {
+      document.getElementById("recuperacaoArea").classList.toggle("hidden");
+    }
+
+    function recuperarSenhaFront() {
+      const payload = {
+        usuario: document.getElementById("rec_usuario").value,
+        nome: document.getElementById("rec_nome").value,
+        nova_senha: document.getElementById("rec_nova_senha").value
+      };
+      google.script.run.withSuccessHandler(function(res) {
+        if (res.sucesso) {
+          mostrarMensagem("loginMsg", "sucesso", res.mensagem);
+          document.getElementById("rec_usuario").value = "";
+          document.getElementById("rec_nome").value = "";
+          document.getElementById("rec_nova_senha").value = "";
+          document.getElementById("recuperacaoArea").classList.add("hidden");
+        } else {
+          mostrarMensagem("loginMsg", "erro", res.mensagem);
+        }
+      }).recuperarSenha(payload);
+    }
+
+    function classeStatus(status) {
+      if (status === "Atrasado") return "status-atrasado";
+      if (status === "Emprestado") return "status-emprestado";
+      if (status === "Devolvido") return "status-devolvido";
+      return "";
+    }
+    let perfilAtual = "";
+
+    function fazerLogin() {
+      limparMensagem("loginMsg");
+      const usuario = document.getElementById("usuario").value;
+      const senha = document.getElementById("senha").value;
+      google.script.run.withSuccessHandler(function(res) {
+        if (res.sucesso) {
+          document.getElementById("loginArea").classList.add("hidden");
+          document.getElementById("appArea").classList.remove("hidden");
+          const nome = (res.usuario && res.usuario.nome) ? res.usuario.nome : (res.usuario && res.usuario.usuario ? res.usuario.usuario : "Usuário");
+          perfilAtual = (res.usuario && res.usuario.perfil) ? String(res.usuario.perfil).toLowerCase() : "";
+          document.getElementById("saudacaoUsuario").textContent = "Olá, " + nome + "! Seja bem-vindo(a).";
+          const menuLogs = document.getElementById("menuLogs");
+          if (perfilAtual === "adm") menuLogs.classList.remove("hidden");
+          else menuLogs.classList.add("hidden");
+          carregarDashboard(); carregarAlunos(); carregarLivros(); carregarLivrosDisponiveis(); carregarEmprestimos(); carregarCategoriasRelatorio(); if (perfilAtual === "adm") carregarLogs();
+        } else mostrarMensagem("loginMsg", "erro", res.mensagem);
+      }).login(usuario, senha);
+    }
+    function logout() {
+      document.getElementById("loginArea").classList.remove("hidden");
+      document.getElementById("appArea").classList.add("hidden");
+      document.getElementById("usuario").value = "";
+      document.getElementById("senha").value = "";
+      perfilAtual = "";
+      document.getElementById("menuLogs").classList.add("hidden");
+    }
+    function mostrarSecao(secaoId) {
+      if (secaoId === "logs" && perfilAtual !== "adm") return;
+      document.querySelectorAll(".secao").forEach(function(el) { el.classList.add("hidden"); });
+      document.getElementById(secaoId).classList.remove("hidden");
+    }
+    function carregarDashboard() {
+      google.script.run.withSuccessHandler(function(d) {
+        document.getElementById("mTotalLivros").innerText = d.totalLivros || 0;
+        document.getElementById("mDisponiveis").innerText = d.disponiveis || 0;
+        document.getElementById("mEmprestados").innerText = d.emprestados || 0;
+        document.getElementById("mAtrasados").innerText = d.atrasados || 0;
+        document.getElementById("mHoje").innerText = d.devolucoesHoje || 0;
+      }).getDashboard();
+    }
+
+    function salvarAluno() {
+      limparMensagem("alunoMsg");
+      const matriculaOriginal = document.getElementById("aluno_matricula_original").value;
+      const aluno = { matricula_original: matriculaOriginal, matricula: document.getElementById("aluno_matricula").value, nome: document.getElementById("aluno_nome").value };
+      const func = matriculaOriginal ? "editarAluno" : "cadastrarAluno";
+      google.script.run.withSuccessHandler(function(res) {
+        if (res.sucesso) { mostrarMensagem("alunoMsg", "sucesso", res.mensagem); limparFormularioAluno(); carregarAlunos(); carregarEmprestimos(); }
+        else mostrarMensagem("alunoMsg", "erro", res.mensagem);
+      })[func](aluno);
+    }
+    function carregarAlunos() {
+      google.script.run.withSuccessHandler(function(alunos) {
+        let html = "<table><tr><th>Matrícula</th><th>Nome</th><th>Ações</th></tr>";
+        alunos.forEach(function(a) {
+          html += `<tr><td>${escaparHTML(a.matricula)}</td><td>${escaparHTML(a.nome)}</td><td><div class="acoes"><button onclick="editarAlunoFront('${escaparParaJS(a.matricula)}','${escaparParaJS(a.nome)}')">Editar</button><button onclick="excluirAlunoFront('${escaparParaJS(a.matricula)}')">Excluir</button></div></td></tr>`;
+        });
+        html += "</table>";
+        document.getElementById("tabelaAlunos").innerHTML = html;
+      }).listarAlunos();
+    }
+    function editarAlunoFront(matricula, nome) { document.getElementById("aluno_matricula_original").value = matricula; document.getElementById("aluno_matricula").value = matricula; document.getElementById("aluno_nome").value = nome; }
+    function excluirAlunoFront(matricula) { if (!confirm("Deseja excluir este aluno?")) return; google.script.run.withSuccessHandler(function(res) { if (res.sucesso) { mostrarMensagem("alunoMsg", "sucesso", res.mensagem); limparFormularioAluno(); carregarAlunos(); carregarEmprestimos(); } else mostrarMensagem("alunoMsg", "erro", res.mensagem); }).excluirAluno(matricula); }
+    function limparFormularioAluno() { document.getElementById("aluno_matricula_original").value = ""; document.getElementById("aluno_matricula").value = ""; document.getElementById("aluno_nome").value = ""; }
+
+    function salvarLivro() {
+      limparMensagem("livroMsg");
+      const livro = {
+        id_livro: document.getElementById("id_livro_edicao").value,
+        titulo: document.getElementById("titulo").value,
+        autor: document.getElementById("autor").value,
+        editora: document.getElementById("editora").value,
+        isbn: document.getElementById("isbn").value,
+        categoria: document.getElementById("categoria").value,
+        ano: document.getElementById("ano").value,
+        quantidade_total: document.getElementById("quantidade_total").value,
+        localizacao: document.getElementById("localizacao").value,
+        status: document.getElementById("status_livro").value,
+        observacoes: document.getElementById("observacoes").value
+      };
+      const func = livro.id_livro ? "editarLivro" : "cadastrarLivro";
+      google.script.run.withSuccessHandler(function(res) {
+        if (res.sucesso) { mostrarMensagem("livroMsg", "sucesso", res.mensagem); limparFormularioLivro(); carregarLivros(); carregarLivrosDisponiveis(); carregarDashboard(); carregarEmprestimos(); }
+        else mostrarMensagem("livroMsg", "erro", res.mensagem);
+      })[func](livro);
+    }
+    function carregarLivros() {
+      google.script.run.withSuccessHandler(function(livros) {
+        let html = "<table><tr><th>Título</th><th>Autor</th><th>Categoria</th><th>Total</th><th>Disponível</th><th>Localização</th><th>Status</th><th>Ações</th></tr>";
+        livros.forEach(function(l) {
+          html += `<tr><td>${escaparHTML(l.titulo)}</td><td>${escaparHTML(l.autor)}</td><td>${escaparHTML(l.categoria)}</td><td>${escaparHTML(l.quantidade_total)}</td><td>${escaparHTML(l.quantidade_disponivel)}</td><td>${escaparHTML(l.localizacao)}</td><td>${escaparHTML(l.status)}</td><td><div class="acoes"><button onclick="editarLivroFront('${escaparParaJS(l.id_livro)}','${escaparParaJS(l.titulo)}','${escaparParaJS(l.autor)}','${escaparParaJS(l.editora)}','${escaparParaJS(l.isbn)}','${escaparParaJS(l.categoria)}','${escaparParaJS(l.ano)}','${escaparParaJS(l.quantidade_total)}','${escaparParaJS(l.localizacao)}','${escaparParaJS(l.status)}','${escaparParaJS(l.observacoes)}')">Editar</button><button onclick="excluirLivroFront('${escaparParaJS(l.id_livro)}')">Excluir</button></div></td></tr>`;
+        });
+        html += "</table>";
+        document.getElementById("tabelaLivros").innerHTML = html;
+      }).listarLivros();
+    }
+    function editarLivroFront(id, titulo, autor, editora, isbn, categoria, ano, quantidade, localizacao, status, observacoes) {
+      document.getElementById("id_livro_edicao").value = id; document.getElementById("titulo").value = titulo; document.getElementById("autor").value = autor;
+      document.getElementById("editora").value = editora; document.getElementById("isbn").value = isbn; document.getElementById("categoria").value = categoria;
+      document.getElementById("ano").value = ano; document.getElementById("quantidade_total").value = quantidade; document.getElementById("localizacao").value = localizacao;
+      document.getElementById("status_livro").value = status || "Ativo"; document.getElementById("observacoes").value = observacoes;
+    }
+    function excluirLivroFront(id) { if (!confirm("Deseja excluir este livro?")) return; google.script.run.withSuccessHandler(function(res) { if (res.sucesso) { mostrarMensagem("livroMsg", "sucesso", res.mensagem); limparFormularioLivro(); carregarLivros(); carregarLivrosDisponiveis(); carregarDashboard(); carregarEmprestimos(); } else mostrarMensagem("livroMsg", "erro", res.mensagem); }).excluirLivro(id); }
+    function limparFormularioLivro() { ["id_livro_edicao","titulo","autor","editora","isbn","categoria","ano","quantidade_total","localizacao","observacoes"].forEach(id => document.getElementById(id).value = ""); document.getElementById("status_livro").value = "Ativo"; }
+
+    function consultarLivrosFront() {
+      const termo = (document.getElementById("buscaLivroConsulta").value || "").toLowerCase().trim();
+      const tipoBusca = (document.getElementById("tipoBuscaLivroConsulta").value || "id_titulo_isbn");
+      google.script.run.withSuccessHandler(function(livros) {
+        const filtrados = !termo ? livros : livros.filter(function(l) {
+          const titulo = String(l.titulo || "").toLowerCase();
+          const idLivro = String(l.id_livro || "").toLowerCase();
+          const isbn = String(l.isbn || "").toLowerCase();
+          const categoria = String(l.categoria || "").toLowerCase();
+          const localizacao = String(l.localizacao || "").toLowerCase();
+          if (tipoBusca === "categoria") return categoria.includes(termo);
+          if (tipoBusca === "localizacao") return localizacao.includes(termo);
+          return titulo.includes(termo) || idLivro.includes(termo) || isbn.includes(termo);
+        });
+
+        let html = "<table><tr><th>ID</th><th>Título</th><th>Quantidade disponível</th><th>Localização</th><th>Status</th></tr>";
+        if (!filtrados.length) {
+          html += "<tr><td colspan='5'>Nenhum livro encontrado.</td></tr>";
+        } else {
+          filtrados.forEach(function(l) {
+            html += `<tr><td>${escaparHTML(l.id_livro)}</td><td>${escaparHTML(l.titulo)}</td><td>${escaparHTML(l.quantidade_disponivel)}</td><td>${escaparHTML(l.localizacao)}</td><td>${escaparHTML(l.status)}</td></tr>`;
+          });
+        }
+        html += "</table>";
+        document.getElementById("resultadoConsultaLivros").innerHTML = html;
+      }).listarLivros();
+    }
+
+    function carregarLivrosDisponiveis() {
+      google.script.run.withSuccessHandler(function(livros) {
+        let options = '<option value="">Selecione um livro</option>';
+        livros.forEach(function(l) { options += `<option value="${escaparHTML(l.id_livro)}">${escaparHTML(l.titulo)} (${escaparHTML(l.quantidade_disponivel)} disponível)</option>`; });
+        document.getElementById("id_livro").innerHTML = options;
+      }).listarLivrosDisponiveis();
+    }
+    function buscarAluno() {
+      limparMensagem("empMsg");
+      const matricula = document.getElementById("matricula").value;
+      if (!matricula) { document.getElementById("nome_aluno").value = ""; return; }
+      google.script.run.withSuccessHandler(function(res) {
+        if (res.encontrado) document.getElementById("nome_aluno").value = res.nome;
+        else { document.getElementById("nome_aluno").value = ""; mostrarMensagem("empMsg", "erro", res.mensagem); }
+      }).buscarAlunoPorMatricula(matricula);
+    }
+    function salvarEmprestimo() {
+      limparMensagem("empMsg");
+      const idEmp = document.getElementById("id_emprestimo_edicao").value;
+      const dados = {
+        id_emprestimo: idEmp,
+        matricula: document.getElementById("matricula").value,
+        id_livro: document.getElementById("id_livro").value,
+        prazo_dias: document.getElementById("prazo_dias").value,
+        observacoes: document.getElementById("obs_emprestimo").value
+      };
+      const fn = idEmp ? "editarEmprestimo" : "registrarEmprestimo";
+      google.script.run.withSuccessHandler(function(res) {
+        if (res.sucesso) {
+          mostrarMensagem("empMsg", "sucesso", res.mensagem);
+          limparFormularioEmprestimo();
+          carregarEmprestimos(); carregarLivros(); carregarLivrosDisponiveis(); carregarDashboard();
+        } else mostrarMensagem("empMsg", "erro", res.mensagem);
+      })[fn](dados);
+    }
+    function carregarEmprestimos() {
+      google.script.run.withSuccessHandler(function(lista) {
+        let html = "<table><tr><th>Aluno</th><th>Matrícula</th><th>Livro</th><th>Empréstimo</th><th>Prazo</th><th>Status</th><th>Ações</th></tr>";
+        lista.forEach(function(e) {
+          const classe = classeStatus(e.status);
+          html += `<tr><td>${escaparHTML(e.nome_aluno)}</td><td>${escaparHTML(e.matricula)}</td><td>${escaparHTML(e.titulo_livro)}</td><td>${escaparHTML(e.data_emprestimo)}</td><td>${escaparHTML(e.prazo_devolucao)}</td><td class="${classe}">${escaparHTML(e.status)}</td><td><div class="acoes">${e.status !== "Devolvido" ? `<button onclick="devolverLivro('${escaparParaJS(e.id_emprestimo)}')">Devolver</button><button onclick="editarEmprestimoFront('${escaparParaJS(e.id_emprestimo)}','${escaparParaJS(e.matricula)}','${escaparParaJS(e.nome_aluno)}','${escaparParaJS(e.id_livro)}','${escaparParaJS(e.observacoes)}')">Editar</button>` : ""}<button onclick="excluirEmprestimoFront('${escaparParaJS(e.id_emprestimo)}')">Excluir</button></div></td></tr>`;
+        });
+        html += "</table>";
+        document.getElementById("tabelaEmprestimos").innerHTML = html;
+      }).listarEmprestimos();
+    }
+    function editarEmprestimoFront(id, matricula, nome, idLivro, observacoes) { document.getElementById("id_emprestimo_edicao").value = id; document.getElementById("matricula").value = matricula; document.getElementById("nome_aluno").value = nome; document.getElementById("id_livro").value = idLivro; document.getElementById("obs_emprestimo").value = observacoes; }
+    function devolverLivro(idEmprestimo) { google.script.run.withSuccessHandler(function(res) { if (res.sucesso) { mostrarMensagem("empMsg", "sucesso", res.mensagem); limparFormularioEmprestimo(); carregarEmprestimos(); carregarLivros(); carregarLivrosDisponiveis(); carregarDashboard(); } else mostrarMensagem("empMsg", "erro", res.mensagem); }).registrarDevolucao(idEmprestimo); }
+    function excluirEmprestimoFront(idEmprestimo) { if (!confirm("Deseja excluir este empréstimo?")) return; google.script.run.withSuccessHandler(function(res) { if (res.sucesso) { mostrarMensagem("empMsg", "sucesso", res.mensagem); limparFormularioEmprestimo(); carregarEmprestimos(); carregarLivros(); carregarLivrosDisponiveis(); carregarDashboard(); } else mostrarMensagem("empMsg", "erro", res.mensagem); }).excluirEmprestimo(idEmprestimo); }
+    function limparFormularioEmprestimo() { document.getElementById("id_emprestimo_edicao").value = ""; document.getElementById("matricula").value = ""; document.getElementById("nome_aluno").value = ""; document.getElementById("id_livro").value = ""; document.getElementById("prazo_dias").value = 7; document.getElementById("obs_emprestimo").value = ""; }
+
+    function consultarHistoricoAlunoFront() {
+      const termo = document.getElementById("buscaAlunoHistorico").value;
+      google.script.run.withSuccessHandler(function(lista) {
+        let html = "<table><tr><th>Aluno</th><th>Matrícula</th><th>Livro</th><th>Empréstimo</th><th>Prazo</th><th>Devolução</th><th>Status</th></tr>";
+        if (!lista || lista.length === 0) html += "<tr><td colspan='7'>Nenhum histórico encontrado.</td></tr>";
+        else lista.forEach(function(e) { html += `<tr><td>${escaparHTML(e.nome_aluno)}</td><td>${escaparHTML(e.matricula)}</td><td>${escaparHTML(e.titulo_livro)}</td><td>${escaparHTML(e.data_emprestimo)}</td><td>${escaparHTML(e.prazo_devolucao)}</td><td>${escaparHTML(e.data_devolucao)}</td><td class="${classeStatus(e.status)}">${escaparHTML(e.status)}</td></tr>`; });
+        html += "</table>";
+        document.getElementById("resultadoHistoricoAluno").innerHTML = html;
+      }).consultarHistoricoAluno(termo);
+    }
+    function consultarHistoricoLivroFront() {
+      const termo = document.getElementById("buscaLivroHistorico").value;
+      google.script.run.withSuccessHandler(function(lista) {
+        let html = "<table><tr><th>Livro</th><th>Aluno</th><th>Matrícula</th><th>Empréstimo</th><th>Prazo</th><th>Devolução</th><th>Status</th></tr>";
+        if (!lista || lista.length === 0) html += "<tr><td colspan='7'>Nenhum histórico encontrado.</td></tr>";
+        else lista.forEach(function(e) { html += `<tr><td>${escaparHTML(e.titulo_livro)}</td><td>${escaparHTML(e.nome_aluno)}</td><td>${escaparHTML(e.matricula)}</td><td>${escaparHTML(e.data_emprestimo)}</td><td>${escaparHTML(e.prazo_devolucao)}</td><td>${escaparHTML(e.data_devolucao)}</td><td class="${classeStatus(e.status)}">${escaparHTML(e.status)}</td></tr>`; });
+        html += "</table>";
+        document.getElementById("resultadoHistoricoLivro").innerHTML = html;
+      }).consultarHistoricoLivro(termo);
+    }
+
+
+    function consultarPendentesFront() {
+      google.script.run.withSuccessHandler(function(lista) {
+        let html = "<table><tr><th>Aluno</th><th>Matrícula</th><th>Livro</th><th>Empréstimo</th><th>Prazo</th><th>Status</th></tr>";
+        if (!lista || lista.length === 0) {
+          html += "<tr><td colspan='6'>Nenhum empréstimo pendente.</td></tr>";
+        } else {
+          lista.forEach(function(e) {
+            html += `<tr><td>${escaparHTML(e.nome_aluno)}</td><td>${escaparHTML(e.matricula)}</td><td>${escaparHTML(e.titulo_livro)}</td><td>${escaparHTML(e.data_emprestimo)}</td><td>${escaparHTML(e.prazo_devolucao)}</td><td class="${classeStatus(e.status)}">${escaparHTML(e.status)}</td></tr>`;
+          });
+        }
+        html += "</table>";
+        document.getElementById("resultadoPendentes").innerHTML = html;
+      }).consultarEmprestimosPendentesOrdenados();
+    }
+
+    function carregarLogs() {
+      google.script.run.withSuccessHandler(function(logs) {
+        let html = "<table><tr><th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Detalhes</th></tr>";
+        if (!logs || logs.length === 0) {
+          html += "<tr><td colspan='4'>Nenhum log encontrado.</td></tr>";
+        } else {
+          logs.forEach(function(l) {
+            html += `<tr><td>${escaparHTML(l.data_hora)}</td><td>${escaparHTML(l.usuario)}</td><td>${escaparHTML(l.acao)}</td><td>${escaparHTML(l.detalhes)}</td></tr>`;
+          });
+        }
+        html += "</table>";
+        document.getElementById("tabelaLogs").innerHTML = html;
+      }).listarLogs(200);
+    }
+
+    function carregarCategoriasRelatorio() {
+      google.script.run.withSuccessHandler(function(categorias) {
+        let html = '<option value="TODAS">Todas as categorias</option>';
+        (categorias || []).forEach(function(c) { html += `<option value="${escaparHTML(c)}">${escaparHTML(c)}</option>`; });
+        document.getElementById("rel_categoria").innerHTML = html;
+      }).listarCategoriasLivros();
+    }
+
+    function gerarRelatorioLivros() {
+      const categoria = document.getElementById("rel_categoria").value;
+      google.script.run.withSuccessHandler(function(lista) {
+        let html = "<table><tr><th>ID</th><th>Título</th><th>Categoria</th><th>Disponível</th><th>Localização</th></tr>";
+        if (!lista || !lista.length) html += "<tr><td colspan='5'>Nenhum livro encontrado.</td></tr>";
+        else lista.forEach(function(l) {
+          html += `<tr><td>${escaparHTML(l.id_livro)}</td><td>${escaparHTML(l.titulo)}</td><td>${escaparHTML(l.categoria)}</td><td>${escaparHTML(l.quantidade_disponivel)}</td><td>${escaparHTML(l.localizacao)}</td></tr>`;
+        });
+        html += "</table>";
+        document.getElementById("resultadoRelLivros").innerHTML = html;
+      }).relatorioLivrosPorCategoria(categoria);
+    }
+
+    function gerarRelatorioEmprestimos() {
+      const inicio = document.getElementById("rel_emp_inicio").value;
+      const fim = document.getElementById("rel_emp_fim").value;
+      const status = document.getElementById("rel_emp_status").value;
+      google.script.run.withSuccessHandler(function(res) {
+        let html = "<table><tr><th>Aluno</th><th>Matrícula</th><th>Livro</th><th>Empréstimo</th><th>Prazo</th><th>Status</th></tr>";
+        const lista = (res && res.dados) ? res.dados : [];
+        if (!lista.length) html += "<tr><td colspan='6'>Nenhum empréstimo encontrado.</td></tr>";
+        else lista.forEach(function(e) {
+          html += `<tr><td>${escaparHTML(e.nome_aluno)}</td><td>${escaparHTML(e.matricula)}</td><td>${escaparHTML(e.titulo_livro)}</td><td>${escaparHTML(e.data_emprestimo)}</td><td>${escaparHTML(e.prazo_devolucao)}</td><td>${escaparHTML(e.status)}</td></tr>`;
+        });
+        html += "</table>";
+        document.getElementById("resultadoRelEmprestimos").innerHTML = html;
+      }).relatorioEmprestimosPorPeriodoStatus(inicio, fim, status);
+    }
+
+    function imprimirArea(id) {
+      const area = document.getElementById(id);
+      if (!area || !area.innerHTML.trim()) {
+        alert("Gere o relatório antes de imprimir.");
+        return;
+      }
+
+      const conteudoOriginal = document.body.innerHTML;
+      const estiloImpressao = `<style>
+        body { font-family: Arial, sans-serif; margin: 16px; }
+        h1 { font-size: 18px; margin-bottom: 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f2f2f2; }
+      </style>`;
+
+      const restaurarDOM = function() {
+        document.body.innerHTML = conteudoOriginal;
+        window.removeEventListener("afterprint", restaurarDOM);
+      };
+
+      window.addEventListener("afterprint", restaurarDOM);
+      document.body.innerHTML = `${estiloImpressao}<h1>Relatório Biblioteca Escolar</h1>${area.innerHTML}`;
+      window.print();
+
+      // fallback para navegadores que não disparam afterprint em alguns contextos
+      setTimeout(function() {
+        if (document.body.innerHTML !== conteudoOriginal) {
+          restaurarDOM();
+        }
+      }, 1200);
+    }
+
+    function carregarRankingAlunos() {
+      limparMensagem("rankingAlunosMsg");
+      const dataInicio = document.getElementById("ranking_data_inicio").value;
+      const dataFim = document.getElementById("ranking_data_fim").value;
+      google.script.run.withSuccessHandler(function(res) {
+        if (!res.sucesso) { mostrarMensagem("rankingAlunosMsg", "erro", res.mensagem); document.getElementById("resultadoRankingAlunos").innerHTML = ""; return; }
+        let html = "<table><tr><th>Posição</th><th>Matrícula</th><th>Aluno</th><th>Quantidade de Empréstimos</th></tr>";
+        if (!res.dados || res.dados.length === 0) html += "<tr><td colspan='4'>Nenhum empréstimo encontrado no período.</td></tr>";
+        else res.dados.forEach(function(item, index) { html += `<tr><td>${index + 1}</td><td>${escaparHTML(item.matricula)}</td><td>${escaparHTML(item.nome)}</td><td>${escaparHTML(item.quantidade)}</td></tr>`; });
+        html += "</table>";
+        document.getElementById("resultadoRankingAlunos").innerHTML = html;
+      }).obterTop10AlunosPorPeriodo(dataInicio, dataFim);
+    }
+    function carregarRankingLivros() {
+      limparMensagem("rankingLivrosMsg");
+      const dataInicio = document.getElementById("ranking_data_inicio").value;
+      const dataFim = document.getElementById("ranking_data_fim").value;
+      google.script.run.withSuccessHandler(function(res) {
+        if (!res.sucesso) { mostrarMensagem("rankingLivrosMsg", "erro", res.mensagem); document.getElementById("resultadoRankingLivros").innerHTML = ""; return; }
+        let html = "<table><tr><th>Posição</th><th>ID Livro</th><th>Título</th><th>Quantidade de Empréstimos</th></tr>";
+        if (!res.dados || res.dados.length === 0) html += "<tr><td colspan='4'>Nenhum empréstimo encontrado no período.</td></tr>";
+        else res.dados.forEach(function(item, index) { html += `<tr><td>${index + 1}</td><td>${escaparHTML(item.id_livro)}</td><td>${escaparHTML(item.titulo)}</td><td>${escaparHTML(item.quantidade)}</td></tr>`; });
+        html += "</table>";
+        document.getElementById("resultadoRankingLivros").innerHTML = html;
+      }).obterTop10LivrosPorPeriodo(dataInicio, dataFim);
+    }
+  </script>
+</body>
+</html>
